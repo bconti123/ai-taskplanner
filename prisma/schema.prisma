@@ -25,6 +25,8 @@ model Task {
   user        User        @relation(fields: [userId], references: [id])
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
+
+  @@unique([id, userId], name: "id_userId")
 }
 
 enum TaskStatus {
