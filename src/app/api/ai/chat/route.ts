@@ -8,6 +8,25 @@ const TASK_STATUSES = ["PENDING", "IN_PROGRESS", "BLOCKED", "DONE"] as const;
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
+const resolveSingleTaskOrAsk = (tasks: any[]) => {
+  if (!tasks || tasks.length === 0) {
+    return { type: "not_found" };
+  };
+
+  if (tasks.length === 1) {
+    return { type: "resolved", tasks: tasks[0] };
+  };
+
+  return { 
+    type: "ambiguous",
+    choices: tasks.map(t => ({
+      id: t.id,
+      title: t.title,
+      status: t.status,
+    })),
+  }
+}
+
 // Tool definitions (JSON Schema)
 const tools: OpenAI.Responses.Tool[] = [
   {
@@ -63,20 +82,20 @@ const tools: OpenAI.Responses.Tool[] = [
   strict: false,
   },
   {
-    type: "function",
-    name: "delete_task",
-    description: "To delete or update by title, first call get_tasks with query to find the task id. " +
-                 "If multiple matches, ask the user which one (show titles + ids). " +
-                 "If exactly one match, proceed.",
-    parameters: {
-      type: "object",
-      additionalProperties: false,
-      properties: {
-        id: { type: "string" }
-      },
-      required: ["id"],
+  type: "function",
+  name: "delete_task",
+  description:
+    "Delete a task by id. If the user provides a title instead of an id, pass it as query. " +
+    "If multiple matches, return choices with ids.",
+  parameters: {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      id: { type: "string", description: "Task id (preferred)" },
+      query: { type: "string", description: "Title/description text to search" },
     },
-    strict: false,
+  },
+  strict: false,
   }
 ];
 
@@ -154,16 +173,54 @@ const runTool = async (name: string, args: any) => {
     }
 
     case "delete_task": {
-      const id = typeof args?.id === "string" ? args.id : "";
-      if (!id) throw new Error("id is required");
+      const rawId = typeof args?.id === "string" ? args.id.trim() : "";
+      const query = typeof args?.query === "string" ? args.query.trim() : "";
 
-      const existing = await prisma.task.findUnique({
-        where: { id_userId: { id, userId: DEMO_USER_ID } },
+      // Helper: detect Prisma cuid-ish ids (your ids look like "cmjcjhar50000l7ktdgzqujhp")
+      const looksLikeId = (s: string) => /^c[a-z0-9]{10,}$/.test(s);
+
+      // 1) If it looks like an id, try delete by id
+      if (rawId && looksLikeId(rawId)) {
+        const existing = await prisma.task.findUnique({
+          where: { id_userId: { id: rawId, userId: DEMO_USER_ID } },
+        });
+
+        if (!existing) return { ok: false, error: "not_found", id: rawId };
+
+        await prisma.task.delete({
+          where: { id_userId: { id: rawId, userId: DEMO_USER_ID } },
+        });
+
+        return { ok: true, deletedTaskId: rawId };
+      }
+
+      // 2) Otherwise treat as title/query (fallback: if model put title into "id")
+      const q = query || rawId;
+      if (!q) return { ok: false, error: "missing_query" };
+
+      const tasks = await prisma.task.findMany({
+        where: {
+          userId: DEMO_USER_ID,
+          OR: [
+            { title: { contains: q, mode: "insensitive" } },
+            { description: { contains: q, mode: "insensitive" } },
+          ],
+        },
+        orderBy: { createdAt: "desc" },
+        take: 5,
       });
 
-      if (!existing) {
-        return { ok: false, error:`Task with id ${id} not found` };
+      const resolution = resolveSingleTaskOrAsk(tasks);
+
+      if (resolution.type === "not_found") {
+        return { ok: false, error: "not_found", query: q };
       }
+
+      if (resolution.type === "ambiguous") {
+        return { ok: false, error: "ambiguous", query: q, choices: resolution.choices };
+      }
+
+      const id = resolution.tasks.id;
 
       await prisma.task.delete({
         where: { id_userId: { id, userId: DEMO_USER_ID } },
@@ -171,10 +228,9 @@ const runTool = async (name: string, args: any) => {
 
       return { ok: true, deletedTaskId: id };
     }
-
-    default:
-      throw new Error(`Unknown tool: ${name}`);
   }
+
+  throw new Error(`Unknown tool: ${name}`);
 }
 
 // Safely parse JSON arguments, defaulting to empty object.
