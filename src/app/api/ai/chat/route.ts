@@ -80,11 +80,10 @@ const tools: OpenAI.Responses.Tool[] = [
   }
 ];
 
-
-
-async function runTool(name: string, args: any) {
+const runTool = async (name: string, args: any) => {
   // NOTE: this is your “tool executor” — where AI actions become real DB actions.
   switch (name) {
+
     case "get_tasks": {
       const limit = typeof args?.limit === "number" ? args.limit : 20;
       const query = typeof args?.query === "string" ? args.query.trim() : "";
@@ -178,7 +177,8 @@ async function runTool(name: string, args: any) {
   }
 }
 
-function safeParseArgs(raw: unknown) {
+// Safely parse JSON arguments, defaulting to empty object.
+const safeParseArgs = (raw: unknown) => {
   if (typeof raw !== "string") return raw ?? {};
   try {
     return JSON.parse(raw);
@@ -187,7 +187,8 @@ function safeParseArgs(raw: unknown) {
   }
 }
 
-export async function POST(req: NextRequest) {
+// POST /api/ai/chat - Chat with the AI, using tools to interact with the database.
+export const POST = async (req: NextRequest) => {
   await ensureDemoUser();
 
   const body = await req.json();
