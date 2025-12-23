@@ -15,7 +15,6 @@ export default function AiBox() {
 
     const userText = input.trim();
     if (!userText || userText === '""') {
-      console.log("no input");
       setUiError("Please type a command or request.");
       setOutcome(null);
       return;
