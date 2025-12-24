@@ -27,7 +27,7 @@ const TaskDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "ALL">("ALL");
   const [q, setQ] = useState("");
 
-  async function fetchTasks() {
+  const fetchTasks = async () => {
     try {
       setLoading(true);
       const res = await fetch("/api/tasks");
@@ -45,12 +45,12 @@ const TaskDashboard = () => {
     fetchTasks();
   }, []);
 
-  async function createTask(input: {
+  const createTask = async (input: {
     title: string;
     description?: string;
     priority?: number;
     dueDate?: string;
-  }) {
+  }) => {
     try {
       setError(null);
       const res = await fetch("/api/tasks", {
@@ -72,7 +72,7 @@ const TaskDashboard = () => {
     }
   }
 
-  async function updateTask(id: string, patch: Partial<Task>) {
+  const updateTask = async (id: string, patch: Partial<Task>) => {
     const prev = tasks;
 
     // Optimistic update
@@ -103,7 +103,7 @@ const TaskDashboard = () => {
     }
   }
 
-  async function deleteTask(id: string) {
+  const deleteTask = async (id: string) => {
     const prev = tasks;
 
     // Optimistic remove
