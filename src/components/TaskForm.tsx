@@ -46,7 +46,7 @@ const TaskForm = ({ onCreate, disabled }: Props) => {
         <label className="block text-xs text-slate-400">Title</label>
         <input
           className="w-full rounded-md border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
-          placeholder="Finish Week 2 CRUD…"
+          placeholder="Title..."
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={disabled}
