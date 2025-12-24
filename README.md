@@ -1,5 +1,7 @@
 # AI Task Planner
 
+Demo Website Link: https://ai-taskplanner-mlro6nuo2-bconti123s-projects.vercel.app/
+
 An AI-assisted task manager built with **Next.js**, **Prisma**, and **PostgreSQL**, featuring a **server-side AI agent** that can create, list, update, and delete tasks using natural language via OpenAI tool calling.
 
 ---
