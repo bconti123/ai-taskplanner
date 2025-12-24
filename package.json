@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "migrate:deploy": "prisma migrate deploy",
-    "build": "next build"
+    "build": "next build",
+    "db:check": "node -e \"const v=process.env.DATABASE_URL||''; console.log('DATABASE_URL protocol:', v.split(':')[0] || '(missing)')\""
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.1.0",
