@@ -1,36 +1,130 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Task Planner
 
-## Getting Started
+An AI-assisted task manager built with **Next.js**, **Prisma**, and **PostgreSQL**, featuring a **server-side AI agent** that can create, list, update, and delete tasks using natural language via OpenAI tool calling.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## What this is
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+This project demonstrates how to build a **production-style AI assistant** that safely operates on application data.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Users can manage tasks in two ways:
+1. A traditional task dashboard (forms, lists, buttons)
+2. A natural language AI chat interface
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Both interfaces operate on the **same backend and database**.
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## Key Features
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Task CRUD (create, list, update, delete)
+- AI assistant that understands natural language commands
+- Server-side OpenAI tool calling (no AI logic in the client)
+- Safe delete/update handling with ambiguity resolution
+- Low-cost AI usage (gpt-4o-mini)
+- Minimal, clean UI for demonstration
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+---
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Frontend:** Next.js (App Router), React, Tailwind CSS  
+- **Backend:** Next.js API Routes  
+- **Database:** PostgreSQL  
+- **ORM:** Prisma  
+- **AI:** OpenAI Responses API (tool calling)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Architecture Overview
+
+
+UI (Dashboard and AI Chat) -> Server-side AI agent (OpenAI Responses) -> Database (Prisma)  
+
+
+### Why this architecture?
+
+- AI logic is centralized on the server
+- No OpenAI API keys in the browser
+- One AI entry point (`/api/ai/chat`)
+- Easy to add other clients later (mobile, Slack bot, etc.)
+- Lower cost and safer execution
+
+---
+
+## AI Assistant Design
+
+The AI assistant does not directly manipulate the database.
+
+Instead, it:
+1. Receives user input
+2. Decides whether to call a tool (e.g. `create_task`, `update_task`)
+3. The server executes the tool safely
+4. Results are returned to the AI for a final response
+
+### Supported AI actions
+
+- Create tasks
+- List tasks
+- Update task fields
+- Delete tasks safely
+
+### Safety features
+
+- Title → ID resolution
+- Case-insensitive matching
+- Partial title matching
+- Ambiguity detection (asks user to choose when needed)
+- Graceful handling of missing or invalid data
+
+---
+
+## Example Prompts
+
+Create: Finish this task
+
+List: List all tasks
+
+Update: Mark task as DONE
+
+Delete: Delete the task Finish this task
+
+
+---
+
+## Why Server-Side AI?
+
+This project intentionally avoids calling OpenAI from the client.
+
+Benefits:
+- Prevents API key exposure
+- Avoids duplicated AI logic
+- Makes auditing and cost control easier
+- Matches real production patterns
+
+---
+
+## Status
+
+This project is complete through:
+- Backend AI agent
+- CRUD task dashboard
+- Minimal AI chat UI
+- End-to-end working flow
+
+Further enhancements (auth, streaming, real-time sync) are possible but intentionally out of scope.
+
+---
+
+## Author Notes
+
+This project focuses on **correct architecture and safety**, not flashy UI.
+
+The goal was to demonstrate:
+- AI tool calling done properly
+- Real database interaction
+- Thoughtful error handling
+- Practical, low-cost AI usage
+
+---
